@@ -2,7 +2,6 @@ import os
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.dispatcher.filters import Text
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 from database import save_user, save_appeal, get_appeals, get_user
@@ -17,6 +16,10 @@ languages = {"UZ": "O'zbek", "RU": "Русский", "EN": "English"}
 
 start_markup = ReplyKeyboardMarkup(resize_keyboard=True).row(
     KeyboardButton("O'zbek"), KeyboardButton("Русский"), KeyboardButton("English")
+)
+
+main_menu_markup = ReplyKeyboardMarkup(resize_keyboard=True).row(
+    KeyboardButton("Murojat yozish"), KeyboardButton("Mening murojatlarim")
 )
 
 bot = None
@@ -66,10 +69,7 @@ async def process_contact(message: types.Message, state: FSMContext):
         language=language
     )
 
-    main_menu = ReplyKeyboardMarkup(resize_keyboard=True).row(
-        KeyboardButton("Murojat yozish"), KeyboardButton("Mening murojatlarim")
-    )
-    await message.answer("Asosiy menyu", reply_markup=main_menu)
+    await message.answer("Sizning murojatlariz uchun:", reply_markup=main_menu_markup)
     await state.finish()
 
 async def cmd_appeal(message: types.Message, state: FSMContext):
@@ -95,6 +95,7 @@ async def process_file_upload(message: types.Message, state: FSMContext):
     elif message.text == "-":
         save_appeal(user_id, appeal_text)
         await message.answer("Murojaatingiz saqlandi.")
+        await message.answer("Sizning murojatlariz uchun:", reply_markup=main_menu_markup)
         await state.finish()
     else:
         await message.answer("Iltimos, file yuklang yoki '-' ni bosing.")
@@ -118,6 +119,7 @@ async def process_file(message: types.Message, state: FSMContext):
 
     save_appeal(user_id, appeal_text, file_url=file_name)
     await message.answer("Murojaatingiz saqlandi.")
+    await message.answer("Sizning murojatlariz uchun:", reply_markup=main_menu_markup)
     await state.finish()
 
 async def cmd_my_appeals(message: types.Message):
