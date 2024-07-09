@@ -19,9 +19,11 @@ start_markup = ReplyKeyboardMarkup(resize_keyboard=True).row(
     KeyboardButton("O'zbek"), KeyboardButton("Русский"), KeyboardButton("English")
 )
 
-main_menu_markup = ReplyKeyboardMarkup(resize_keyboard=True).row(
-    KeyboardButton("Murojat yozish"), KeyboardButton("Mening murojatlarim")
-)
+def get_main_menu_markup(language_code:str) -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(resize_keyboard=True).row(
+        KeyboardButton(get_language("Write an appeal", language_code)),
+        KeyboardButton(get_language("My appeals", language_code)),
+    )
 
 bot = None
 
@@ -32,7 +34,7 @@ def set_bot(bot_instance):
 async def cmd_start(message: types.Message):
     user = get_user(message.from_user.id)
     if user:
-        await message.answer(get_language("Main menu", user['language']), reply_markup=main_menu_markup)
+        await message.answer(get_language("Main menu", user['language']), reply_markup=get_main_menu_markup(user['language']))
     else:
         await message.answer("Tilni tanlang:", reply_markup=start_markup)
         await Form.language.set()
@@ -67,10 +69,10 @@ async def process_contact(message: types.Message, state: FSMContext):
         phone_number=message.contact.phone_number
     )
 
-    await message.answer(get_language("For your appeals", user['language']), reply_markup=main_menu_markup)
+    await message.answer(get_language("For your appeals", user['language']), reply_markup=get_main_menu_markup(user['language']))
     await state.finish()
 
-async def cmd_appeal(message: types.Message, state: FSMContext):
+async def cmd_appeal(message: types.Message):
     user = get_user(message.from_user.id)
     await message.answer(get_language("Write your appeal", user['language']))
     await Form.appeal_text.set()
@@ -96,7 +98,7 @@ async def process_file_upload(message: types.Message, state: FSMContext):
     elif message.text == "-":
         save_appeal(user_id, appeal_text)
         await message.answer(get_language("Your appeal has been saved", user['language']))
-        await message.answer(get_language("For your appeals", user['language']), reply_markup=main_menu_markup)
+        await message.answer(get_language("For your appeals", user['language']), reply_markup=get_main_menu_markup(user['language']))
         await state.finish()
     else:
         await message.answer(get_language("Upload file or press '-'", user['language']))
@@ -121,7 +123,7 @@ async def process_file(message: types.Message, state: FSMContext):
 
     save_appeal(user_id, appeal_text, file_url=file_name)
     await message.answer(get_language("Your appeal has been saved", user['language']))
-    await message.answer(get_language("For your appeals", user['language']), reply_markup=main_menu_markup)
+    await message.answer(get_language("For your appeals", user['language']), reply_markup=get_main_menu_markup(user['language']))
     await state.finish()
 
 async def cmd_my_appeals(message: types.Message):
@@ -141,6 +143,6 @@ async def cmd_my_appeals(message: types.Message):
                 with open(file_path, 'rb') as file:
                     await message.answer_document(document=file, caption=appeal_text)
             except FileNotFoundError:
-                await message.answer(f"Fayl topilmadi: {file_url}")
+                pass
         else:
             await message.answer(appeal_text)
