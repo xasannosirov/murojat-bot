@@ -9,14 +9,22 @@ DB_URL = os.getenv('DB_URL')
 def get_connection():
     return psycopg2.connect(DB_URL, cursor_factory=RealDictCursor)
 
-def save_user(user_id, first_name, last_name, username, phone_number, language):
+def update_user(user_id, first_name, last_name, username, phone_number):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO users (id, first_name, last_name, username, phone_number, language)
-        VALUES (%s, %s, %s, %s, %s, %s)
-        ON CONFLICT (id) DO NOTHING;
-    """, (user_id, first_name, last_name, username, phone_number, language))
+        UPDATE users SET first_name = %s, last_name = %s, username = %s, phone_number = %s WHERE id = %s
+    """, (first_name, last_name, username, phone_number, user_id))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+def save_language(user_id, language):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO users (id, language) VALUES (%s, %s);
+    """, (user_id, language))
     conn.commit()
     cur.close()
     conn.close()
